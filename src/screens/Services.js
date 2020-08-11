@@ -6,12 +6,18 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Button,
 } from 'react-native';
 
 export default class StockItem extends Component {
+  constructor(props) {
+    super(props);
+  }
   renderItems = ({item, index}) => {
     return (
-      <TouchableOpacity style={styles.mainView}>
+      <TouchableOpacity
+        onPress={() => this.props.navigation.navigate('ItemDetails')}
+        style={styles.mainView}>
         <View>
           <Text style={styles.text}>Item Name</Text>
           <Text style={styles.item}>{item.item}</Text>
@@ -22,13 +28,12 @@ export default class StockItem extends Component {
   render() {
     return (
       <View style={{flex: 1, paddingBottom: 100}}>
-        <ScrollView>
-          <FlatList
-            data={this.props.data}
-            renderItem={this.renderItems}
-            keyExtractor={(item, index) => item.id.toString()}
-          />
-        </ScrollView>
+        <FlatList
+          contentContainerStyle={{paddingBottom: 100}}
+          data={this.props.data}
+          renderItem={this.renderItems}
+          keyExtractor={(item, index) => item.id.toString()}
+        />
       </View>
     );
   }

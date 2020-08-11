@@ -6,11 +6,11 @@ import {
   ScrollView,
   View,
 } from 'react-native';
-import Header from '../component/Header';
-import {TextInput} from '../component/InputFields';
+import CheckBox from '@react-native-community/checkbox';
+import {Header, TextInput} from '../component';
+import CustomPicker from '../component/Picker';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {APIurl} from '../utils/Urls';
-import axios from 'axios';
+import {APIUrl} from '../utils';
 
 export default class CreateItem extends Component {
   constructor() {
@@ -19,9 +19,10 @@ export default class CreateItem extends Component {
     this.state = {
       showstock: false,
       showprice: false,
-      visible: false,
+      itemNameError: '',
+      PickerValue: '',
       activestatus: 1,
-      sellerId: '',
+      sellerId: 1,
       type: '',
       item: '',
       description: '',
@@ -34,62 +35,44 @@ export default class CreateItem extends Component {
       salesPrice: '',
       purchasePrice: '',
       tax: '',
+      visiblePicker: false,
+      isManualTexEntry: false,
     };
   }
-  //{{url}}/api/stock/add-new-item
+
   add() {
-    axios
-      .post(APIurl + 'stock/add-new-item', {
-        method: 'post',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        // body: JSON.stringify({
-        //   sellerId: this.state.sellerId,
-        //   type: this.state.type,
-        //   item: this.state.item,
-        //   description: this.state.description,
-        //   SAC: this.state.SAC,
-        //   HSN: this.state.HSN,
-        //   initialStock: this.state.initialStock,
-        //   asOfDate: this.state.asOfDate,
-        //   lowStockAlert: this.state.lowStockAlert,
-        //   salesPrice: this.state.salesPrice,
-        //   purchasePrice: this.state.purchasePrice,
-        //   tax: this.state.tax,
-        // }),
-        body: JSON.stringify({
-          sellerId: '1',
-          type: 'stocksdata',
-          item: 'test item added',
-          description: '',
-          HSN: '0123456',
-          initialStock: 100,
-          asOfDate: '01/07/2020',
-          lowStockAlert: 10,
-          salesPrice: 10,
-          purchasePrice: 8,
-          tax: '0%',
-        }),
-      })
+    console.warn(this.state);
+    fetch(APIUrl + 'stock/add-new-item', {
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sellerId: this.state.sellerId,
+        type: this.state.activestatus === 1 ? 'goods' : 'services',
+        item: this.state.item,
+        description: this.state.description,
+        SAC: this.state.SAC,
+        HSN: this.state.HSN,
+        initialStock: this.state.initialStock,
+        asOfDate: this.state.asOfDate,
+        lowStockAlert: this.state.lowStockAlert,
+        salesPrice: this.state.salesPrice,
+        purchasePrice: this.state.purchasePrice,
+        tax: this.state.isManualTexEntry
+          ? this.state.tax + '%'
+          : this.state.tax,
+      }),
+    })
       .then((response) => response.json())
       .then((json) => {
-        console.log(json);
+        // console.log('mahi', json);
         if (json.status === 'ok') {
-          this.setState({
-            item: '',
-            description: '',
-            SAC: '',
-            stock: '',
-            HSN: '',
-            initialStock: '',
-            asOfDate: '',
-            lowStockAlert: '',
-            salesPrice: '',
-            purchasePrice: '',
-            tax: '',
-          });
+          this.props.route.params.onSucess();
+          setTimeout(() => {
+            this.props.navigation.goBack('Stockview');
+          }, 200);
         }
       })
       .catch((error) => {
@@ -97,63 +80,71 @@ export default class CreateItem extends Component {
       });
   }
 
+  itemNameValidator = () => {
+    if (this.state.item === '') {
+      this.setState({itemNameError: 'please enter item name'});
+    } else {
+      this.setState({itemNameError: ''});
+    }
+  };
   render() {
     return (
-      <ScrollView>
-        <View style={styles.wrapper}>
-          <Header titleHeader="CreateItem" />
-          <View style={styles.mainradio}>
-            <View style={styles.allradio}>
-              <View>
-                <TouchableOpacity
-                  onPress={() => {
-                    this.setState({activestatus: 1});
-                  }}
-                  style={[
-                    styles.radio,
-                    {
-                      backgroundColor:
-                        this.state.activestatus === 1 ? 'black' : 'transparent',
-                    },
-                  ]}
-                />
-              </View>
-              <View style={{marginLeft: 10}}>
-                <Text>Goods</Text>
-              </View>
+      <View style={styles.wrapper}>
+        <Header titleHeader="CreateItem" />
+        <ScrollView>
+          <View style={styles.allradio}>
+            <TouchableOpacity
+              onPress={() => {
+                this.setState({activestatus: 1});
+              }}
+              style={[
+                styles.goodsradio,
+                {
+                  backgroundColor:
+                    this.state.activestatus === 1 ? '#8041E8' : 'transparent',
+                },
+              ]}
+            />
 
-              <View>
-                <TouchableOpacity
-                  onPress={() => {
-                    this.setState({activestatus: 2});
-                  }}
-                  style={[
-                    styles.radio,
-                    {
-                      backgroundColor:
-                        this.state.activestatus === 2 ? 'black' : 'transparent',
-                      marginLeft: 10,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={{marginLeft: 10}}>
-                <Text>Services</Text>
-              </View>
-            </View>
+            <Text style={styles.goodstext}>Goods </Text>
+
+            <TouchableOpacity
+              onPress={() => {
+                this.setState({activestatus: 2});
+              }}
+              style={[
+                styles.serviceradio,
+                {
+                  backgroundColor:
+                    this.state.activestatus === 2 ? '#8041E8' : 'transparent',
+                  marginLeft: 10,
+                },
+              ]}
+            />
+
+            <Text style={styles.servicetext}>Services</Text>
           </View>
+
           <View style={styles.inputwrapper}>
             {this.state.activestatus === 1 ? (
               <View>
                 <TextInput
                   label="Item Name"
                   value={this.state.item}
+                  onBlur={() => this.itemNameValidator()}
                   onChangeText={(item) => this.setState({item})}
                   placeholder="Enter Product Name"
                 />
+                {this.state.itemNameError && this.state.itemNameError != '' ? (
+                  <Text style={styles.itemnametext}>
+                    {this.state.itemNameError}
+                  </Text>
+                ) : null}
+
                 <TextInput
                   label="Description"
                   value={this.state.description}
+                  maxLength={25}
                   onChangeText={(description) => this.setState({description})}
                   placeholder="Product Description"
                 />
@@ -170,7 +161,10 @@ export default class CreateItem extends Component {
                       label="HSN"
                       placeholder="HSN No"
                       value={this.state.HSN}
-                      onChangeText={(HSN) => this.setState({HSN})}
+                      keyboardType="numeric"
+                      onChangeText={(text) =>
+                        this.setState({HSN: text.replace(/[^0-9]/g, '')})
+                      }
                     />
                   </View>
                 </View>
@@ -186,42 +180,34 @@ export default class CreateItem extends Component {
                       <Icon name="right" color="#DBDBDB" size={20} />
                     )}
                   </View>
-                  {/* </TouchableOpacity> */}
+
                   {this.state.showstock ? (
-                    // <TouchableOpacity>
                     <View style={styles.stockdropdown}>
-                      <View style={styles.stockdirection}>
-                        <View style={styles.initialstock}>
-                          <TextInput
-                            label="Initial Stock"
-                            placeholder="Initial Stock"
-                            value={this.state.initialStock}
-                            onChangeText={(initialStock) =>
-                              this.setState({initialStock})
-                            }
-                          />
-                        </View>
-                        <View style={styles.AsofDate}>
-                          <TextInput
-                            label="AsofDate"
-                            placeholder="Date"
-                            value={this.state.asOfDate}
-                            onChangeText={(asOfDate) =>
-                              this.setState({asOfDate})
-                            }
-                          />
-                        </View>
-                      </View>
-                      <View>
-                        <TextInput
-                          label="lowStockAlert"
-                          placeholder="Low Stock Alert"
-                          value={this.state.lowStockAlert}
-                          onChangeText={(lowStockAlert) =>
-                            this.setState({lowStockAlert})
-                          }
-                        />
-                      </View>
+                      <TextInput
+                        label="Initial Stock"
+                        placeholder="Initial Stock"
+                        value={this.state.initialStock}
+                        keyboardType="numeric"
+                        maxLength={10}
+                        onChangeText={(text) =>
+                          this.setState({
+                            initialStock: text.replace(/[^0-9]/g, ''),
+                          })
+                        }
+                      />
+
+                      <TextInput
+                        label="lowStockAlert"
+                        placeholder="Low Stock Alert"
+                        value={this.state.lowStockAlert}
+                        keyboardType="numeric"
+                        maxLength={10}
+                        onChangeText={(text) =>
+                          this.setState({
+                            lowStockAlert: text.replace(/[^0-9]/g, ''),
+                          })
+                        }
+                      />
                     </View>
                   ) : null}
                 </TouchableOpacity>
@@ -237,56 +223,142 @@ export default class CreateItem extends Component {
                       <Icon name="right" color="#DBDBDB" size={20} />
                     )}
                   </View>
-                  {/* </TouchableOpacity> */}
+
                   {this.state.showprice ? (
-                    // <TouchableOpacity>
                     <View style={styles.stockdropdown}>
                       <View style={styles.stockdirection}>
                         <View style={styles.saleprice}>
                           <TextInput
                             label="SalePrice"
-                            placeholder="Date"
+                            keyboardType="phone-pad"
+                            maxLength={10}
+                            placeholder="SalePrice"
                             value={this.state.salesPrice}
-                            onChangeText={(salesPrice) =>
-                              this.setState({salesPrice})
+                            onChangeText={(text) =>
+                              this.setState({
+                                salesPrice: text.replace(/[^0-9]/g, ''),
+                              })
                             }
                           />
                         </View>
                         <View style={styles.PurchasePrice}>
                           <TextInput
                             label="PurchasePrice"
-                            placeholder="Date"
+                            keyboardType="numeric"
+                            maxLength={10}
+                            placeholder="PurchasePrice"
                             value={this.state.purchasePrice}
-                            onChangeText={(purchasePrice) =>
-                              this.setState({purchasePrice})
+                            onChangeText={(text) =>
+                              this.setState({
+                                purchasePrice: text.replace(/[^0-9]/g, ''),
+                              })
                             }
                           />
                         </View>
                       </View>
                       <View>
-                        <View style={styles.checkwrapper}>
-                          <View style={styles.bothtaxtwraper}>
-                            <View>
-                              <TouchableOpacity style={styles.checkbox} />
-                            </View>
-                            <View style={styles.taxtextmargin}>
-                              <Text>IncludingaTax</Text>
-                            </View>
-                          </View>
-                          <View style={styles.bothtaxtwraper}>
-                            <View>
-                              <TouchableOpacity style={styles.checkbox} />
-                            </View>
-                            <View style={styles.taxtextmargin}>
-                              <Text>ExcludingTax</Text>
-                            </View>
-                          </View>
+                        <View style={styles.checkbox}>
+                          <CheckBox
+                            value={this.state.isManualTexEntry}
+                            onValueChange={(newValue) =>
+                              this.setState({isManualTexEntry: newValue})
+                            }
+                            tintColors={{true: '#8041E8', false: 'black'}}
+                          />
+                          <Text style={styles.manualtext}>
+                            Manually Enter Tax
+                          </Text>
                         </View>
                         <TextInput
                           label="Tax"
                           placeholder="10 days"
                           value={this.state.tax}
                           onChangeText={(tax) => this.setState({tax})}
+                          onPress={() => this.setState({visiblePicker: true})}
+                          editable={this.state.isManualTexEntry}
+                          keyboardType="numeric"
+                          renderRightIcon={
+                            !this.state.isManualTexEntry && (
+                              <Icon name="caretdown" />
+                            )
+                          }
+                        />
+
+                        <CustomPicker
+                          title="Select Tax"
+                          visible={this.state.visiblePicker}
+                          items={[
+                            {
+                              id: 1,
+                              name: '0',
+                            },
+                            {
+                              id: 2,
+                              name: 'Non GST',
+                            },
+                            {
+                              id: 3,
+                              name: 'GST@0%',
+                            },
+                            {
+                              id: 4,
+                              name: 'IGST@0%',
+                            },
+                            {
+                              id: 5,
+                              name: 'GST@0.25%',
+                            },
+                            {
+                              id: 6,
+                              name: 'IGST@0.25%',
+                            },
+
+                            {
+                              id: 7,
+                              name: 'GST@3%',
+                            },
+                            {
+                              id: 8,
+                              name: 'IGST@3%',
+                            },
+                            {
+                              id: 9,
+                              name: 'GST@5%',
+                            },
+                            {
+                              id: 10,
+                              name: 'IGST@5%',
+                            },
+                            {
+                              id: 11,
+                              name: 'GST@12%',
+                            },
+                            {
+                              id: 12,
+                              name: 'IGST@12%',
+                            },
+                            {
+                              id: 13,
+                              name: 'GST@18%',
+                            },
+                            {
+                              id: 14,
+                              name: 'IGST@18%',
+                            },
+                            {
+                              id: 15,
+                              name: 'GST@28%',
+                            },
+                          ]}
+                          onSelectMenu={(item) =>
+                            this.setState({
+                              tax: item.name,
+                              visiblePicker: false,
+                            })
+                          }
+                          onRequestClose={() =>
+                            this.setState({visiblePicker: false})
+                          }
                         />
                       </View>
                     </View>
@@ -298,18 +370,25 @@ export default class CreateItem extends Component {
                 <TextInput
                   label="Item Name"
                   value={this.state.item}
+                  onBlur={() => this.itemNameValidator()}
                   onChangeText={(text) => this.setState({item: text})}
                   placeholder="Enter Product Name"
                 />
+                <Text style={styles.itemnametext}>
+                  {this.state.itemNameError}
+                </Text>
                 <TextInput
                   label="Description"
                   value={this.state.description}
+                  maxLength={25}
                   placeholder="Product Description"
+                  onChangeText={(text) => this.setState({description: text})}
                 />
                 <TextInput
-                  label="HSN"
+                  label="SAC"
+                  keyboardType="numeric"
                   value={this.state.SAC}
-                  placeholder="enter hsn"
+                  placeholder="enterSAC"
                 />
                 <TouchableOpacity
                   onPress={() =>
@@ -323,43 +402,125 @@ export default class CreateItem extends Component {
                       <Icon name="right" color="#DBDBDB" size={20} />
                     )}
                   </View>
-                  {/* </TouchableOpacity> */}
+
                   {this.state.showprice ? (
-                    // <TouchableOpacity>
                     <View style={styles.stockdropdown}>
                       <TextInput
                         label="SalePrice"
+                        // keyboardType="phone-pad"
+                        keyboardType="numeric"
+                        maxLength={10}
                         value={this.state.salesPrice}
-                        placeholder="Date"
-                        onChangeText={(salesPrice) =>
-                          this.setState({salesPrice})
+                        placeholder="SalePrice"
+                        onChangeText={(text) =>
+                          this.setState({
+                            salesPrice: text.replace(/[^0-9]/g, ''),
+                          })
                         }
                       />
 
                       <View>
-                        <View style={styles.checkwrapper}>
-                          <View style={styles.bothtaxtwraper}>
-                            <View>
-                              <TouchableOpacity style={styles.checkbox} />
-                            </View>
-                            <View style={styles.taxtextmargin}>
-                              <Text>IncludingaTax</Text>
-                            </View>
-                          </View>
-                          <View style={styles.bothtaxtwraper}>
-                            <View>
-                              <TouchableOpacity style={styles.checkbox} />
-                            </View>
-                            <View style={styles.taxtextmargin}>
-                              <Text>ExcludingTax</Text>
-                            </View>
-                          </View>
+                        <View style={styles.checkbox}>
+                          <CheckBox
+                            value={this.state.isManualTexEntry}
+                            onValueChange={(newValue) =>
+                              this.setState({isManualTexEntry: newValue})
+                            }
+                            tintColors={{true: '#8041E8', false: 'black'}}
+                          />
+                          <Text style={styles.manualtext}>
+                            Manually Enter Tax
+                          </Text>
                         </View>
                         <TextInput
                           label="Tax"
                           placeholder="10 days"
                           value={this.state.tax}
                           onChangeText={(tax) => this.setState({tax})}
+                          onPress={() => this.setState({visiblePicker: true})}
+                          editable={this.state.isManualTexEntry}
+                          keyboardType="numeric"
+                          renderRightIcon={
+                            !this.state.isManualTexEntry && (
+                              <Icon name="caretdown" />
+                            )
+                          }
+                        />
+                        <CustomPicker
+                          title="Select Tax"
+                          visible={this.state.visiblePicker}
+                          items={[
+                            {
+                              id: 1,
+                              name: '0',
+                            },
+                            {
+                              id: 2,
+                              name: 'Non GST',
+                            },
+                            {
+                              id: 3,
+                              name: 'GST@0%',
+                            },
+                            {
+                              id: 4,
+                              name: 'IGST@0%',
+                            },
+                            {
+                              id: 5,
+                              name: 'GST@0.25%',
+                            },
+                            {
+                              id: 6,
+                              name: 'IGST@0.25%',
+                            },
+
+                            {
+                              id: 7,
+                              name: 'GST@3%',
+                            },
+                            {
+                              id: 8,
+                              name: 'IGST@3%',
+                            },
+                            {
+                              id: 9,
+                              name: 'GST@5%',
+                            },
+                            {
+                              id: 10,
+                              name: 'IGST@5%',
+                            },
+                            {
+                              id: 11,
+                              name: 'GST@12%',
+                            },
+                            {
+                              id: 12,
+                              name: 'IGST@12%',
+                            },
+                            {
+                              id: 13,
+                              name: 'GST@18%',
+                            },
+                            {
+                              id: 14,
+                              name: 'IGST@18%',
+                            },
+                            {
+                              id: 15,
+                              name: 'GST@28%',
+                            },
+                          ]}
+                          onSelectMenu={(item) =>
+                            this.setState({
+                              tax: item.name,
+                              visiblePicker: false,
+                            })
+                          }
+                          onRequestClose={() =>
+                            this.setState({visiblePicker: false})
+                          }
                         />
                       </View>
                     </View>
@@ -372,28 +533,46 @@ export default class CreateItem extends Component {
               <Text style={styles.savetext}>Save</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     );
   }
 }
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    backgroundColor: 'white',
   },
   mainradio: {
     marginTop: 5,
   },
-  radio: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
+  goodsradio: {
+    height: 24,
+    width: 24,
+    borderRadius: 12,
     borderWidth: 1,
+    marginRight: 20,
+  },
+  goodstext: {
+    marginRight: 10,
+    fontSize: 18,
+  },
+  servicetext: {
+    marginRight: 10,
+    fontSize: 18,
+  },
+  serviceradio: {
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginRight: 10,
   },
   allradio: {
     flexDirection: 'row',
     marginTop: 30,
-    marginHorizontal: 100,
+    marginHorizontal: 18,
+    alignSelf: 'center',
   },
   service: {
     marginRight: 30,
@@ -402,16 +581,21 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 20,
   },
+  itemnametext: {
+    color: 'red',
+    bottom: 20,
+    left: 12,
+  },
   UntHsnwrapper: {
     flexDirection: 'row',
   },
   untwrap: {
     flex: 1,
-    marginRight: 20,
+    marginRight: 10,
   },
   hsnwrap: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: 10,
   },
   stock: {
     borderWidth: 1,
@@ -426,19 +610,14 @@ const styles = StyleSheet.create({
     color: '#8041E8',
   },
   stockdropdown: {
-    //flexDirection: 'row',
     padding: 20,
     paddingBottom: 1,
     marginTop: 1,
     borderWidth: 1,
     borderRadius: 10,
     borderColor: '#DBDBDB',
-    // marginBottom: 20,
   },
-  initialstock: {
-    flex: 1,
-    marginRight: 20,
-  },
+
   AsofDate: {
     flex: 1,
     marginLeft: 20,
@@ -462,30 +641,52 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: -10,
   },
-  checkwrapper: {
-    flexDirection: 'row',
-    padding: 10,
-    marginBottom: 20,
+
+  manualtext: {
+    marginTop: 3,
+    fontSize: 16,
   },
   bothtaxtwraper: {flexDirection: 'row', flex: 1},
   checkbox: {
-    height: 20,
-    width: 20,
-    borderRadius: 3,
-    borderWidth: 1,
+    flexDirection: 'row',
+    marginBottom: 18,
+    marginLeft: 2,
   },
   taxtextmargin: {marginLeft: 4},
   save: {
     borderWidth: 1,
     borderRadius: 10,
-    marginTop: 30,
-    padding: 20,
+    marginTop: 20,
+    //padding: 20,
     backgroundColor: '#8041E8',
   },
   savetext: {
     color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 18,
-    paddingHorizontal: 120,
+    paddingVertical: 20,
+    alignSelf: 'center',
   },
 });
+{
+  /* <TouchableOpacity>
+                          <Picker
+                            selectedValue={this.state.tax}
+                            onValueChange={(itemvalue, indexvalue) =>
+                              this.setState({tax: itemvalue})
+                            }>
+                            <Picker.Item label="select tax" value="" />
+                            <Picker.Item label="0" value="0" />
+                            <Picker.Item label="Non GST" value="Non GST" />
+                            <Picker.Item label="GST@0%" value="GST@0%" />
+                            <Picker.Item label="IGST@0%" value="IGST@0%" />
+                            <Picker.Item label="GST@0.25%" value="GST@0.25%" />
+                            <Picker.Item label="GST@3%" value="GST@3%" />
+                            <Picker.Item label="GST@5%" value="GST@5%" />
+                            <Picker.Item label="IGST@5%" value="IGST@5%" />
+                            <Picker.Item label="GST@12%" value="GST@12%" />
+                            <Picker.Item label="IGST@12%" value="IGST@12%" />
+                            <Picker.Item label="GST@18%" value="GST@18%" />
+                          </Picker>
+                        </TouchableOpacity> */
+}

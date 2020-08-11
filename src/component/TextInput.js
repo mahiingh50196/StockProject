@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import {Value} from 'react-native-reanimated';
 
 const InputFields = (props) => {
   return (
@@ -22,6 +21,9 @@ const InputFields = (props) => {
               style={styles.textinputs}
               value={props.value}
               onChangeText={props.onChangeText}
+              keyboardType={props.keyboardType}
+              maxLength={props.maxLength}
+              onBlur={props.onBlur}
             />
           </View>
           {props.renderRightIcon ? (

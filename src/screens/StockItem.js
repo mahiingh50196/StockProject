@@ -1,6 +1,12 @@
 import React, {Component} from 'react';
-import {Text, FlatList, View, ScrollView, StyleSheet} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {
+  Text,
+  FlatList,
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 
 export default class StockItem extends Component {
   renderItems = ({item, index}) => {

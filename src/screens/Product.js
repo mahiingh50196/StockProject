@@ -10,10 +10,13 @@ import {
 
 export default class StockItem extends Component {
   renderItems = ({item, index}) => {
-    const {navigation} = this.props;
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate('ItemDetails')}
+        onPress={() =>
+          this.props.navigation.navigate('ItemDetails', {
+            itemData: item,
+          })
+        }
         style={styles.mainView}>
         <View>
           <Text style={styles.text}>Item Name</Text>
@@ -31,14 +34,13 @@ export default class StockItem extends Component {
   };
   render() {
     return (
-      <View style={{flex: 1, paddingBottom: 100}}>
-        <ScrollView>
-          <FlatList
-            data={this.props.data}
-            renderItem={this.renderItems}
-            keyExtractor={(item, index) => item.id.toString()}
-          />
-        </ScrollView>
+      <View style={{flex: 1}}>
+        <FlatList
+          contentContainerStyle={{paddingBottom: 100}}
+          data={this.props.data}
+          renderItem={this.renderItems}
+          keyExtractor={(item, index) => item.id.toString()}
+        />
       </View>
     );
   }
